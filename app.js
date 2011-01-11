@@ -29,7 +29,7 @@ function addTodo() {
 }
 function addCategory() {
     var data = $('#newCategory').val();
-	var newMenuItem = $('<li></li>');
+    var newMenuItem = $('<li></li>');
     var newCategory = $('<a href="#' + data + '" rel="' + data + '"></a>');
     newCategory.text(data);
     newMenuItem.append(newCategory);
@@ -38,10 +38,10 @@ function addCategory() {
     $('#newCategory').val('');
     var categories = JSON.parse(localStorage.getItem("categories"));
     if (categories == null) categories = new Array();
-	
+
     categories.push(data);
     localStorage.setItem("categories", JSON.stringify(categories));
-	loadTodos(data);
+    loadTodos(data);
     bindFields();
 
 }
@@ -58,11 +58,11 @@ function changeStatus(index, done) {
     localStorage.setItem("todos" + category, JSON.stringify(todos));
 }
 function bindFields() {
-	$('menu ul li a').click(function() {
+    $('menu ul li a').click(function() {
         $('menu ul li a').removeClass('selected');
         $(this).addClass('selected');
         loadTodos($(this).attr('rel'));
-		return false;
+        return false;
     });
     $('#todos article:last-child .delete').click(function(e) {
         removeTodo($(this).prevAll('.index').val());
@@ -83,22 +83,22 @@ function bindFields() {
 
 }
 function loadTodos(category) {
-	$('menu ul li a').removeClass('selected');
-    $('menu ul li a[rel="'+category+'"]').addClass('selected');
-	$('#todos').html('');
+    $('menu ul li a').removeClass('selected');
+    $('menu ul li a[rel="' + category + '"]').addClass('selected');
+    $('#todos').html('');
     var todos = JSON.parse(localStorage.getItem("todos" + category));
-	if (todos == null ){
-		todos = JSON.parse(localStorage.getItem("todos"));
-		if (todos ==null) todos = new Array();
-		localStorage.setItem("todos"+category, JSON.stringify(todos));
-		localStorage.removeItem("todos");
-		
-	}
+    if (todos == null) {
+        todos = JSON.parse(localStorage.getItem("todos"));
+        if (todos == null) todos = new Array();
+        localStorage.setItem("todos" + category, JSON.stringify(todos));
+        localStorage.removeItem("todos");
+
+    }
     if (todos != null) {
-	
+
         for (i = 0; i < todos.length; i++)
         {
-			
+
             var todo = todos[i];
             var check = '';
             var classes = '';
@@ -115,7 +115,7 @@ function loadTodos(category) {
             newSpan.text(todo.desc);
             newLabel.append(newSpan);
             newArticle.append(newHidden).append(newLabel).append('<a class=\"delete\" href=\"#delete\">x</a>');
-            
+
             $('#todos').append(newArticle);
 
         }
@@ -125,7 +125,7 @@ function loadTodos(category) {
 function loadCategories() {
     var cat = JSON.parse(localStorage.getItem("categories"));
     if (cat != null) {
-        for (i = 0; i < cat.length; i++){
+        for (i = 0; i < cat.length; i++) {
             var category = cat[i];
             var newMenuItem = $('<li></li>');
             var newCategory = $('<a href="#' + category + '" rel="' + category + '"></a>');
@@ -135,7 +135,33 @@ function loadCategories() {
         }
     }
 }
+
+function activatePlaceholders() {
+    var detect = navigator.userAgent.toLowerCase();
+    if (detect.indexOf('safari') > 0) return false;
+    var inputs = document.getElementsByTagName('input');
+    for (var i = 0; i < inputs.length; i++) {
+        if (inputs[i].getAttribute('type') == 'text') {
+            if (inputs[i].getAttribute('placeholder') && inputs[i].getAttribute('placeholder').length > 0) {
+                inputs[i].value = inputs[i].getAttribute('placeholder');
+                inputs[i].onclick = function() {
+                    if (this.value == this.getAttribute('placeholder')) {
+                        this.value = '';
+                    }
+                    return false;
+                }
+                inputs[i].onblur = function() {
+                    if (this.value.length < 1) {
+                        this.value = this.getAttribute('placeholder');
+                    }
+                }
+            }
+        }
+    }
+}
+
 $(function() {
+	activatePlaceholders();
     loadCategories();
     loadTodos('main');
     $('#new input').keydown(function(e) {
@@ -149,31 +175,31 @@ $(function() {
         }
     });
     $('menu ul li a').click(function() {
-        
+
         loadTodos($(this).attr('rel'));
-		return false;
+        return false;
     });
 
     $('#clear').click(function(e) {
         if (confirm("Are you sure you want to delete all todos?")) {
             var category = $('a.selected').attr('rel');
             localStorage.removeItem("todos" + category);
-			if(category != 'main'){
-				var categories = JSON.parse(localStorage.getItem("categories"));
-				for(i=0;i<categories.length;i++){
-					if (categories[i]==category){
-						categories.splice(i,1);
-						localStorage.setItem("categories", JSON.stringify(categories));
-						$('menu ul li a[rel="'+category+'"]').parent().fadeOut();
-						$('menu ul li a[rel="'+category+'"]').parent().remove();
-						break;
-					}
-					
-				}
-			}
-			loadTodos('main');
+            if (category != 'main') {
+                var categories = JSON.parse(localStorage.getItem("categories"));
+                for (i = 0; i < categories.length; i++) {
+                    if (categories[i] == category) {
+                        categories.splice(i, 1);
+                        localStorage.setItem("categories", JSON.stringify(categories));
+                        $('menu ul li a[rel="' + category + '"]').parent().fadeOut();
+                        $('menu ul li a[rel="' + category + '"]').parent().remove();
+                        break;
+                    }
+
+                }
+            }
+            loadTodos('main');
             e.preventDefault();
-            
+
         }
         return false;
     });
