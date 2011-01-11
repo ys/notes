@@ -165,7 +165,7 @@ $(function() {
 						categories.splice(i,1);
 						localStorage.setItem("categories", JSON.stringify(categories));
 						$('menu ul li a[rel="'+category+'"]').parent().fadeOut();
-						
+						$('menu ul li a[rel="'+category+'"]').parent().remove();
 						break;
 					}
 					
