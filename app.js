@@ -41,6 +41,7 @@ function addCategory() {
 	
     categories.push(data);
     localStorage.setItem("categories", JSON.stringify(categories));
+	loadTodos(data);
     bindFields();
 
 }
@@ -82,8 +83,17 @@ function bindFields() {
 
 }
 function loadTodos(category) {
+	$('menu ul li a').removeClass('selected');
+    $('menu ul li a[rel="'+category+'"]').addClass('selected');
 	$('#todos').html('');
     var todos = JSON.parse(localStorage.getItem("todos" + category));
+	if (todos == null ){
+		todos = JSON.parse(localStorage.getItem("todos"));
+		if (todos ==null) todos = new Array();
+		localStorage.setItem("todos"+category, JSON.stringify(todos));
+		localStorage.removeItem("todos");
+		
+	}
     if (todos != null) {
 	
         for (i = 0; i < todos.length; i++)
@@ -115,16 +125,13 @@ function loadTodos(category) {
 function loadCategories() {
     var cat = JSON.parse(localStorage.getItem("categories"));
     if (cat != null) {
-        for (i = 0; i < cat.length; i++)
-        {
+        for (i = 0; i < cat.length; i++){
             var category = cat[i];
             var newMenuItem = $('<li></li>');
             var newCategory = $('<a href="#' + category + '" rel="' + category + '"></a>');
             newCategory.text(category);
             newMenuItem.append(newCategory);
             $('#lastItem').before(newMenuItem);
-
-
         }
     }
 }
@@ -142,8 +149,7 @@ $(function() {
         }
     });
     $('menu ul li a').click(function() {
-        $('menu ul li a').removeClass('selected');
-        $(this).addClass('selected');
+        
         loadTodos($(this).attr('rel'));
 		return false;
     });
@@ -152,8 +158,22 @@ $(function() {
         if (confirm("Are you sure you want to delete all todos?")) {
             var category = $('a.selected').attr('rel');
             localStorage.removeItem("todos" + category);
+			if(category != 'main'){
+				var categories = JSON.parse(localStorage.getItem("categories"));
+				for(i=0;i<categories.length;i++){
+					if (categories[i]==category){
+						categories.splice(i,1);
+						localStorage.setItem("categories", JSON.stringify(categories));
+						$('menu ul li a[rel="'+category+'"]').parent().fadeOut();
+						
+						break;
+					}
+					
+				}
+			}
+			loadTodos('main');
             e.preventDefault();
-            $('#todos').children().fadeOut();
+            
         }
         return false;
     });
