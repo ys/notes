@@ -5,22 +5,45 @@
 		<link href='http://fonts.googleapis.com/css?family=Josefin+Sans:100,regular,bold' rel='stylesheet' type='text/css'>
 		<link href='style.css' rel='stylesheet' type='text/css'>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-		<script src="app.js"></script>
+		<script>
+		function addTodo(data,category){
+			var todos = JSON.parse(localStorage.getItem("todos" + category));
+		    if (todos == null) todos = new Array();
+		    if ($('#todos').children().length != 0) {
+		        var index = todos.length;
+		    } else {
+		        index = 0;
+		    }
+		    var todo = new Object();
+		    todo.desc = data;
+		    todo.done = false;
+		    todos.push(todo)
+		    localStorage.setItem("todos" + category, JSON.stringify(todos));
+		}
+		
+		$.urlParam = function(name){
+			var results = new RegExp('[\\?&]' + name + '=([^&#]*)').exec(window.location.href);
+			return results[1] || 0;
+		}
+		
+		$(function() {
+			
+			var category = $.urlParam('category');
+			var note = $.urlParam('note');
+			if (category && note){
+				addTodo(note,category);
+				$('#added').text('added');
+			}
+			
+		});
+		
+		</script>
 	</head>
 	<body>
 		
 		<header>
 			<h1>NOTES</h1>
-			<menu><ul><li><a href="#main" class="selected" rel="main">main</a></li></li><li id="lastItem"><input id="newCategory" type="text" placeholder="+ Add a Category"/></li><li id="importSection"><input type="text" id="importUrl" placeholder="+ Import a category from Url"/></li></ul></menu>
-			<div id="actions"><a id="clear" href="#clean">clean</a> | <a id="import" href="#import">import</a> | <a id="publish" href="#publish">publish</a></div>
-		</header>
-		
-		<section id="todos">
-			
-		</section>
-		<section id="new">
-			<input id="newTodoText" type="text" placeholder="+ Add a Note"/>
-		</section>
+			<section id="added"> </section>
 		<footer>
 			Made by <a href='mailto:yannick@eatcupcak.es'>eatcpcks</a><br/>
 			inspired by <a href='http://todokyo.com'>todokyo.com</a><br/>

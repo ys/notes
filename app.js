@@ -1,5 +1,6 @@
 function addTodo() {
     var category = $('a.selected').attr('rel');
+	var data = $('#newTodoText').val();
     var todos = JSON.parse(localStorage.getItem("todos" + category));
     if (todos == null) todos = new Array();
     if ($('#todos').children().length != 0) {
@@ -7,7 +8,7 @@ function addTodo() {
     } else {
         index = 0;
     }
-    var data = $('#newTodoText').val();
+    
     var newArticle = $('<article></article>');
     var newHidden = $('<input class=\"index\" type=\"hidden\">');
     newHidden.val(index);
@@ -16,7 +17,11 @@ function addTodo() {
     var newSpan = $('<span></span>');
     newSpan.text(data);
     newLabel.append(newSpan);
-    newArticle.append(newHidden).append(newLabel).append('<a class=\"delete\" href=\"#delete\">x</a>');
+	var link = '';
+	if (isUrl(data)){
+		link = '  <a href="'+data+'" target="_blank">link</a>';
+	}
+    newArticle.append(newHidden).append(newLabel).append(link).append('<a class=\"delete\" href=\"#delete\">x</a>');
     $('#todos').append(newArticle);
     $('#newTodoText').val('');
     var todo = new Object();
@@ -27,9 +32,29 @@ function addTodo() {
     bindFields();
 
 }
+
+function addTodo(data,category){
+	var todos = JSON.parse(localStorage.getItem("todos" + category));
+    if (todos == null) todos = new Array();
+    if ($('#todos').children().length != 0) {
+        var index = todos.length;
+    } else {
+        index = 0;
+    }
+    var todo = new Object();
+    todo.desc = data;
+    todo.done = false;
+    todos.push(todo)
+    localStorage.setItem("todos" + category, JSON.stringify(todos));
+    bindFields();
+}
 function addCategory() {
     var data = $('#newCategory').val();
-    var newMenuItem = $('<li></li>');
+    addaCategory(data);
+
+}
+function addaCategory(data){
+	var newMenuItem = $('<li></li>');
     var newCategory = $('<a href="#' + data + '" rel="' + data + '"></a>');
     newCategory.text(data);
     newMenuItem.append(newCategory);
@@ -42,8 +67,7 @@ function addCategory() {
     categories.push(data);
     localStorage.setItem("categories", JSON.stringify(categories));
     loadTodos(data);
-    bindFields();
-
+    bindFields();	
 }
 function removeTodo(index) {
     var category = $('a.selected').attr('rel');
@@ -64,13 +88,13 @@ function bindFields() {
         loadTodos($(this).attr('rel'));
         return false;
     });
-    $('#todos article:last-child .delete').click(function(e) {
+    $('#todos article .delete').click(function(e) {
         removeTodo($(this).prevAll('.index').val());
         $(this).parent().fadeOut();
         e.preventDefault();
         return false;
     });
-    $('#todos article:last-child input:checkbox').change(function() {
+    $('#todos article input:checkbox').change(function() {
 
         if ($(this).is(':checked')) {
             changeStatus($(this).parent().prevAll('.index').val(), true);
@@ -114,13 +138,27 @@ function loadTodos(category) {
             var newSpan = $('<span class=\"' + classes + '\"></span>');
             newSpan.text(todo.desc);
             newLabel.append(newSpan);
-            newArticle.append(newHidden).append(newLabel).append('<a class=\"delete\" href=\"#delete\">x</a>');
+			var link = '';
+			if (isUrl(todo.desc)){
+				link = '  <a href="'+todo.desc+'" target="_blank">link</a>';
+			}
+            newArticle.append(newHidden).append(newLabel).append(link).append('<a class=\"delete\" href=\"#delete\">x</a>');
 
             $('#todos').append(newArticle);
 
         }
     }
+	bindFields();
 
+}
+
+function isUrl(data){
+	var v = new RegExp(); 
+	v.compile("^[A-Za-z]+://[A-Za-z0-9-_]+\\.[A-Za-z0-9-_%&\?\/.=]+$"); 
+	if (!v.test(data)) { 
+		return false; 
+	}
+	return true;
 }
 function loadCategories() {
     var cat = JSON.parse(localStorage.getItem("categories"));
@@ -134,6 +172,63 @@ function loadCategories() {
             $('#lastItem').before(newMenuItem);
         }
     }
+}
+function publishListForTwoMinutes(){
+	var category = $('a.selected').attr('rel');
+    var todos = JSON.parse(localStorage.getItem("todos" + category));
+	var post = '{"category":"'+category+'","list":'+JSON.stringify(todos)+'}';
+	$.ajax({
+	  type: 'POST',
+	  url: 'http://high-fog-986.heroku.com/new?callback=?',
+	  data: post,
+	  success: function(data) {$('#publish').fadeOut();$('#publish').after('<a target="_blank" href="'+data.url+'">published</a>');},
+	  dataType: 'json'
+	});
+	return false;
+}
+function importCategory(){
+	var url = $('#importUrl').val() +"?callback=?";
+	$.getJSON(url, function(data) {
+		var category = data["category"];
+		if (containsCategory(category)){
+			var date = new Date();
+			category = category+randomString(3);
+		}
+		$('#importSection').hide();
+		addaCategory(category);
+		localStorage.setItem("todos" + category, JSON.stringify(data["list"]));
+		loadTodos(category);
+		
+		$('menu ul li[id="importSection"]').hide();
+		$('menu ul li[id="lastItem"]').show();
+		
+	});
+	
+}
+function randomString(length) {
+    var chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz'.split('');
+    
+    if (! length) {
+        length = Math.floor(Math.random() * chars.length);
+    }
+    
+    var str = '';
+    for (var i = 0; i < length; i++) {
+        str += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return str;
+}
+
+function containsCategory(category){
+	var cat = JSON.parse(localStorage.getItem("categories"));
+    if (cat != null) {
+        for (i = 0; i < cat.length; i++) {
+            var c = cat[i];
+            if(c==category) return true;
+        }
+    }
+	if (category == "main") return true;
+	return false;
 }
 
 function activatePlaceholders() {
@@ -179,6 +274,10 @@ $(function() {
         loadTodos($(this).attr('rel'));
         return false;
     });
+	$('#publish').click(function(){
+		publishListForTwoMinutes();
+		return false;
+	});
 
     $('#clear').click(function(e) {
         if (confirm("Are you sure you want to delete all todos?")) {
@@ -211,7 +310,7 @@ $(function() {
         return false;
     });
     $('header h1').click(function() {
-        $('menu ul li').toggle('slide');
+        $('menu ul li[id!="importSection"]').toggle('slide');
     });
     $('input:checkbox').change(function() {
 
@@ -223,4 +322,21 @@ $(function() {
             $(this).nextAll('span').removeClass('cross');
         }
     });
+	
+	$('#importUrl').keydown(function(e) {
+        if (e.which == 13) {
+			
+            importCategory();
+        }
+    });
+	
+	$('#import').click(function(e) {
+			//Cancel the link behavior
+			e.preventDefault();
+			$('menu ul li[id!="importSection"]').show();
+			$('menu ul li[id="importSection"]').show();
+			$('menu ul li[id="lastItem"]').hide();
+
+		});
+
 });
